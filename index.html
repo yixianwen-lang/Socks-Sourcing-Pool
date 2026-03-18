@@ -6,12 +6,17 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f4f7; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 1280px; margin: 0 auto; }
+        .container { max-width: 1440px; margin: 0 auto; }
         header { background: #ee4d2d; color: white; padding: 20px; border-radius: 16px; margin-bottom: 24px; }
         .desc-box { background: rgba(255,255,255,0.2); padding: 14px 16px; border-radius: 12px; font-size: 14px; }
         .filter-section { background: white; padding: 18px 20px; border-radius: 24px; margin-bottom: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; border: 1px solid #f0f0f0; }
         input, select { padding: 10px 14px; border: 1px solid #e2e2e2; border-radius: 30px; font-size: 13px; background: #fafafa; min-width: 130px; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+        /* 关键修改：最小宽度调整为240px，间隙缩小到16px，以便展示4-5列 */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
         .card { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #f0f0f0; position: relative; display: flex; flex-direction: column; }
         .judge-tag { position: absolute; top: 12px; left: 12px; padding: 4px 10px; border-radius: 30px; font-size: 11px; font-weight: 700; cursor: pointer; z-index: 10; color: white; }
         .bg-p0 { background: #2b7a4b; }
