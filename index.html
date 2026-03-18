@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>热销原品 · 合并展示</title>
     <style>
-        /* 样式保持不变（略，请复用之前的样式） */
         * { box-sizing: border-box; }
         body { font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f4f7; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 1280px; margin: 0 auto; }
@@ -13,13 +12,12 @@
         .filter-section { background: white; padding: 18px 20px; border-radius: 24px; margin-bottom: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; box-shadow: 0 6px 16px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
         input, select { padding: 10px 14px; border: 1px solid #e2e2e2; border-radius: 30px; font-size: 13px; background: #fafafa; transition: 0.2s; min-width: 140px; }
         input:focus, select:focus { outline: none; border-color: #ee4d2d; background: white; box-shadow: 0 0 0 3px rgba(238,77,45,0.1); }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
         .card { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #f0f0f0; transition: transform 0.15s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); border-color: #ffe0d6; }
         .judge-tag { position: absolute; top: 12px; left: 12px; padding: 4px 10px; border-radius: 30px; font-size: 11px; font-weight: 700; cursor: pointer; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.08); letter-spacing: 0.3px; backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.3); }
         .bg-p0 { background: #2b7a4b; color: white; }
         .bg-p1 { background: #1a5c7e; color: white; }
-        .special-tag { position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #ff7e5f, #f64f59); color: white; padding: 4px 12px; border-radius: 40px; font-size: 11px; font-weight: 700; z-index: 10; box-shadow: 0 4px 12px rgba(246,79,89,0.3); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(2px); }
         .img-container { width: 100%; height: 200px; background: #f8f8f8; overflow: hidden; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
         .img-container img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.2s; }
         .img-container:hover img { transform: scale(1.02); }
@@ -37,8 +35,16 @@
         .invite-id-box { flex-grow: 1; background: #fff8f6; border: 2px dashed #ee4d2d; padding: 6px 4px; text-align: center; font-size: 15px; font-weight: 700; color: #ee4d2d; border-radius: 40px; cursor: pointer; transition: background 0.1s; letter-spacing: 0.5px; }
         .invite-id-box:hover { background: #fff0ec; }
         .footer-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #9c9cac; border-top: 1px solid #efefef; padding-top: 14px; margin-top: auto; }
-        .btn-link { color: #0066cc; font-weight: 600; text-decoration: none; font-size: 12px; background: #f0f7ff; padding: 4px 10px; border-radius: 40px; border: 1px solid #d9eaff; transition: 0.1s; }
-        .btn-link:hover { background: #e1f0fe; }
+        .footer-row a { color: #0066cc; font-weight: 600; text-decoration: none; font-size: 12px; background: #f0f7ff; padding: 4px 10px; border-radius: 40px; border: 1px solid #d9eaff; transition: 0.1s; margin-left: 6px; }
+        .footer-row a:hover { background: #e1f0fe; }
+        .expand-btn { background: none; border: 1px dashed #aaa; border-radius: 30px; padding: 6px 12px; font-size: 12px; color: #555; cursor: pointer; margin: 10px 0 5px; width: fit-content; }
+        .expand-btn:hover { background: #f0f0f0; }
+        .model-images { display: none; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .model-images.show { display: grid; }
+        .model-img-item { text-align: center; }
+        .model-img-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; cursor: zoom-in; }
+        .model-img-item .model-price { font-size: 11px; color: #ee4d2d; font-weight: 600; margin-top: 4px; }
+        .model-img-item .model-variant { font-size: 10px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         #imageModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(8px); }
         #imageModal img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
         #pagination button { background: white; border: 1px solid #ddd; border-radius: 30px; padding: 6px 16px; font-size: 13px; cursor: pointer; margin: 0 4px; }
@@ -52,29 +58,22 @@
     <header>
         <h1 style="margin:0; font-size: 26px;">🔥 4月热销 · 按商品ID合并展示</h1>
         <div class="desc-box">
-            <div style="display: flex; gap: 24px; flex-wrap: wrap;">
-                <div><span style="background:#2b7a4b; width:14px; height:14px; display:inline-block; border-radius:4px; margin-right:6px;"></span> <strong>高价品</strong> —— 点击左上角标签查看1688链接</div>
-                <div><span style="background:#1a5c7e; width:14px; height:14px; display:inline-block; border-radius:4px; margin-right:6px;"></span> <strong>普通品</strong> —— 核价参考</div>
-                <div><span style="background:#f64f59; width:14px; height:14px; display:inline-block; border-radius:4px; margin-right:6px;"></span> <strong>特殊标签</strong> —— 如「高价品」</div>
-            </div>
-            <hr style="border-color:rgba(255,255,255,0.2); margin:12px 0;">
             <p>💰 <strong>高效提报</strong>：单击红色虚线框复制邀请ID，一次报满该商品下所有规格。<br>
             📌 提报路径：SCS卖家后台 → 商品管理 → 机会商品 → 输入邀请ID → 立刻报名<br>
-            💹 价格问题：点击左上角价格标签查看1688核价链接，联系买手申诉。</p>
+            💹 价格问题：点击左上角标签查看核价参考，联系买手申诉。</p>
         </div>
     </header>
 
     <div class="filter-section">
         <input type="text" id="searchInput" placeholder="🔍 搜索标题 / ID..." oninput="debouncedFilter()">
-        <select id="l1Filter" onchange="updateL2(); applyFilters()"><option value="">一级类目(全部)</option></select>
-        <select id="l2Filter" onchange="applyFilters()"><option value="">二级类目(全部)</option></select>
-        <!-- 明确为“是否高价品”筛选 -->
+        <select id="l1Filter" onchange="updateL2(); updateL3(); applyFilters()"><option value="">一级类目(全部)</option></select>
+        <select id="l2Filter" onchange="updateL3(); applyFilters()"><option value="">二级类目(全部)</option></select>
+        <select id="l3Filter" onchange="applyFilters()"><option value="">三级类目(全部)</option></select>  <!-- 新增三级类目 -->
         <select id="pFilter" onchange="applyFilters()">
             <option value="">是否高价品(全部)</option>
             <option value="P0">💰 高价品 (P0)</option>
             <option value="P1">🔄 普通品 (P1)</option>
         </select>
-        <select id="tagFilter" onchange="applyFilters()"><option value="">特殊标签(全部)</option></select>
         <input type="number" id="minPrice" placeholder="¥ 最低价" step="0.01" oninput="debouncedFilter()">
         <input type="number" id="maxPrice" placeholder="¥ 最高价" step="0.01" oninput="debouncedFilter()">
         <select id="sortOrder" onchange="applyFilters()">
@@ -113,6 +112,7 @@
         return str.toString().replace(/^['"+]+|["=\t]/g, '').trim();
     };
 
+    // 解析一行，支持最多16+列（三级类目在第16列，索引16）
     const parseRow = (arr) => {
         return {
             title: arr[0] || '',
@@ -122,6 +122,7 @@
             link: arr[4] || '',
             l1: arr[5] || '',
             l2: arr[6] || '',
+            l3: arr[16] || '',          // 三级类目，新增列，索引16
             inviteId: cleanId(arr[7]),
             modelId: cleanId(arr[8]),
             link1688: arr[9] || '',
@@ -147,9 +148,9 @@
                     link: parsed.link,
                     l1: parsed.l1,
                     l2: parsed.l2,
+                    l3: parsed.l3,
                     inviteId: parsed.inviteId,
                     link1688: parsed.link1688,
-                    specialTag: parsed.tag,
                     date: parsed.date,
                     variants: [],
                     hasHighPrice: false,
@@ -159,7 +160,7 @@
             if (!group.imgUrl && parsed.imgUrl) group.imgUrl = parsed.imgUrl;
             if (!group.link && parsed.link) group.link = parsed.link;
             if (!group.link1688 && parsed.link1688) group.link1688 = parsed.link1688;
-            if (!group.specialTag && parsed.tag) group.specialTag = parsed.tag;
+            if (!group.l3 && parsed.l3) group.l3 = parsed.l3; // 取第一个非空三级类目
             if (parsed.judgeText.includes('高价品') || parsed.judgeText.includes('P0')) {
                 group.hasHighPrice = true;
             }
@@ -169,6 +170,7 @@
                 modelId: parsed.modelId,
                 inviteId: parsed.inviteId,
                 judgeText: parsed.judgeText,
+                imgUrl: parsed.imgUrl,   // 保存每个变体的图片，可能不同
             });
         });
 
@@ -200,13 +202,13 @@
                         cur = '';
                     } else cur += c;
                 }
-                row.push(cur.trim());
+                row.push(cur.trim()); // 最后一列
                 row.push(idx);
                 return row;
             }).filter(r => r && r.length >= 12);
 
             groupedProducts = groupByItemid(products);
-            console.log('分组后商品数量:', groupedProducts.length); // 调试输出
+            console.log('分组后商品数量:', groupedProducts.length);
             initFilters();
             applyFilters();
         } catch (e) {
@@ -222,6 +224,7 @@
         else alert('❌ 无法识别的链接');
     }
 
+    // 渲染卡片
     function render(groupList, page = 1) {
         currentPage = page;
         const grid = document.getElementById('productGrid');
@@ -244,11 +247,22 @@
                 variantsHtml += `<div class="variant-item" style="justify-content:center; color:#999;">等${g.variants.length}个规格</div>`;
             }
 
+            // 构建展开图片区域html
+            let imagesHtml = '';
+            g.variants.forEach((v, idx) => {
+                imagesHtml += `
+                    <div class="model-img-item">
+                        <img src="${v.imgUrl || g.imgUrl}" loading="lazy" ondblclick="document.getElementById('modalImg').src='${v.imgUrl || g.imgUrl}'; document.getElementById('imageModal').style.display='flex';" style="width:80px;height:80px;object-fit:cover;">
+                        <div class="model-price">¥${v.price.toFixed(2)}</div>
+                        <div class="model-variant" title="${v.variant.replace(/"/g, '&quot;')}">${v.variant}</div>
+                    </div>
+                `;
+            });
+
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
                 <div class="judge-tag ${judgeClass}" onclick="checkLink('${(g.link1688 || '').replace(/'/g, "\\'")}')">${judgeDisplay}</div>
-                ${g.specialTag ? `<div class="special-tag">${g.specialTag}</div>` : ''}
                 <div class="img-container" ondblclick="document.getElementById('modalImg').src='${g.imgUrl}'; document.getElementById('imageModal').style.display='flex';">
                     <img src="${g.imgUrl}" loading="lazy" alt="商品图">
                 </div>
@@ -258,14 +272,21 @@
                     <div class="variants-box">
                         ${variantsHtml}
                     </div>
+                    <button class="expand-btn" onclick="this.nextElementSibling.classList.toggle('show'); this.textContent = this.nextElementSibling.classList.contains('show') ? '收起图片' : '展开图片'">展开图片</button>
+                    <div class="model-images">
+                        ${imagesHtml}
+                    </div>
                     <div class="invite-row">
                         <span class="model-count-tag">${g.modelCount}款</span>
                         <div class="invite-id-box" onclick="navigator.clipboard.writeText('${inviteId.replace(/'/g, "\\'")}').then(()=>alert('✅ 已复制: ${inviteId}')).catch(()=>alert('复制失败'))">${inviteId || '--'}</div>
                     </div>
                     <div class="footer-row">
                         <span>${g.date || ''}</span>
-                        <span style="font-weight:600; color:#555;">${g.variants[0]?.modelId || ''}</span>
-                        <a href="${g.link}" target="_blank" rel="noopener" class="btn-link">原品 →</a>
+                        <span style="font-weight:600; color:#555;">${g.itemid}</span>   <!-- 展示itemid -->
+                        <div>
+                            <a href="javascript:void(0)" onclick="checkLink('${(g.link1688 || '').replace(/'/g, "\\'")}')">1688</a>
+                            <a href="${g.link}" target="_blank" rel="noopener">原品</a>
+                        </div>
                     </div>
                 </div>
             `;
@@ -297,8 +318,8 @@
         const q = document.getElementById('searchInput').value.toLowerCase().trim();
         const l1 = document.getElementById('l1Filter').value;
         const l2 = document.getElementById('l2Filter').value;
+        const l3 = document.getElementById('l3Filter').value;
         const pLevel = document.getElementById('pFilter').value;
-        const tag = document.getElementById('tagFilter').value;
         const min = parseFloat(document.getElementById('minPrice').value) || 0;
         const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
 
@@ -306,8 +327,8 @@
             if (q && !g.title.toLowerCase().includes(q) && !g.inviteId.toLowerCase().includes(q)) return false;
             if (l1 && g.l1 !== l1) return false;
             if (l2 && g.l2 !== l2) return false;
+            if (l3 && g.l3 !== l3) return false;   // 三级类目过滤
             if (pLevel && g.judgeLevel !== pLevel) return false;
-            if (tag && g.specialTag !== tag) return false;
             if (g.maxPrice < min || g.minPrice > max) return false;
             return true;
         });
@@ -327,13 +348,11 @@
 
     function initFilters() {
         const l1Set = new Set();
-        const tagSet = new Set();
+        const l3Set = new Set();   // 三级类目集合
         groupedProducts.forEach(g => {
             if (g.l1 && g.l1.trim()) l1Set.add(g.l1.trim());
-            if (g.specialTag && g.specialTag.trim()) tagSet.add(g.specialTag.trim());
+            if (g.l3 && g.l3.trim()) l3Set.add(g.l3.trim());
         });
-        console.log('一级类目选项:', Array.from(l1Set));
-        console.log('特殊标签选项:', Array.from(tagSet));
 
         const l1Select = document.getElementById('l1Filter');
         l1Select.innerHTML = '<option value="">一级类目(全部)</option>';
@@ -344,15 +363,7 @@
             l1Select.appendChild(opt);
         });
 
-        const tagSelect = document.getElementById('tagFilter');
-        tagSelect.innerHTML = '<option value="">特殊标签(全部)</option>';
-        [...tagSet].sort().forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v;
-            opt.textContent = v;
-            tagSelect.appendChild(opt);
-        });
-
+        // 初始化三级类目（先清空，后续联动会更新）
         updateL2();
     }
 
@@ -371,6 +382,27 @@
             opt.value = v;
             opt.textContent = v;
             l2Select.appendChild(opt);
+        });
+        // 更新三级类目
+        updateL3();
+    }
+
+    function updateL3() {
+        const l1 = document.getElementById('l1Filter').value;
+        const l2 = document.getElementById('l2Filter').value;
+        const l3Set = new Set();
+        groupedProducts.forEach(g => {
+            if ((!l1 || g.l1 === l1) && (!l2 || g.l2 === l2)) {
+                if (g.l3 && g.l3.trim()) l3Set.add(g.l3.trim());
+            }
+        });
+        const l3Select = document.getElementById('l3Filter');
+        l3Select.innerHTML = '<option value="">三级类目(全部)</option>';
+        [...l3Set].sort().forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            l3Select.appendChild(opt);
         });
     }
 
