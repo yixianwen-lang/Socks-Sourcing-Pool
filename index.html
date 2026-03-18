@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>热销原品清单</title>
+    <style>
+        body { font-family: 'PingFang SC', sans-serif; background: #f4f4f7; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: #ee4d2d; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .desc-box { background: rgba(255,255,255,0.2); padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 14px; line-height: 1.6; }
+        .filter-section { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        input, select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 8px; overflow: hidden; border: 1px solid #eee; transition: 0.3s; position: relative; display: flex; flex-direction: column; }
+        .judge-tag { position: absolute; top: 10px; left: 10px; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .bg-p0 { background: #d4edda; color: #155724; }
+        .bg-p1 { background: #d1ecf1; color: #0c5460; }
+        .special-tag { position: absolute; top: 10px; right: 10px; background: linear-gradient(90deg, #ff7a18, #e52e71); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; z-index: 10; }
+        .img-container { width: 100%; height: 220px; background: #fff; overflow: hidden; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+        .img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .title { font-weight: bold; font-size: 15px; margin-bottom: 10px; height: 38px; line-height: 19px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
+        .price-variant-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .price { color: #ee4d2d; font-size: 22px; font-weight: bold; flex-shrink: 0; }
+        .variant { font-size: 13px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 10px; }
+        .invite-row { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+        .model-count-tag { background: #fff2f0; border: 1px solid #ffccc7; color: #cf1322; font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+        .invite-id-box { flex-grow: 1; border: 2px dashed #ee4d2d; padding: 4px; text-align: center; font-size: 16px; font-weight: bold; color: #ee4d2d; border-radius: 6px; cursor: pointer; }
+        .footer-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 10px; margin-top: auto; }
+        .btn-link { color: #0056b3; font-weight: bold; text-decoration: none; }
+        #imageModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; cursor: zoom-out; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>热销原品清单</h1>
+        <div class="desc-box">
+🔥优先选P0：P0 级产品价格更优
+💰高效提报：单击红框 ID 快速复制，搜索该 ID 报满所有型号流量翻倍！
+💹价格有问题： 点击左上角P0查看核价链接，联系买手申诉。</div>
+    </header>
+    <div class="filter-section">
+        <input type="text" id="searchInput" placeholder="搜索标题/ID..." oninput="debouncedFilter()">
+        <select id="l1Filter" onchange="updateL2(); applyFilters()"><option value="">一级类目(全部)</option></select>
+        <select id="l2Filter" onchange="applyFilters()"><option value="">二级类目(全部)</option></select>
+        <select id="pFilter" onchange="applyFilters()"><option value="">P0/P1(全部)</option><option value="P0">P0</option><option value="P1">P1</option></select>
+        <select id="tagFilter" onchange="applyFilters()"><option value="">特殊标签(全部)</option></select>
+        <input type="number" id="minPrice" placeholder="最低价" oninput="debouncedFilter()">
+        <input type="number" id="maxPrice" placeholder="最高价" oninput="debouncedFilter()">
+        <select id="sortOrder" onchange="applyFilters()">
+            <option value="default">默认排序</option>
+            <option value="priceAsc">价格升序</option>
+            <option value="priceDesc">价格降序</option>
+        </select>
+        <span id="countDisplay" style="font-weight:bold; color:#ee4d2d; margin-left:auto;"></span>
+    </div>
+    <div class="product-grid" id="productGrid"></div>
+    <div style="margin:20px; text-align:center;" id="pagination"></div>
+</div>
+<div id="imageModal" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
+
+<script>
+    document.oncontextmenu = () => false;
+    document.onkeydown = (e) => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.keyCode === 85)) {
+            return false;
+        }
+    };
+
+    console.log("%c⚠️ 发现非法查看源码行为", "color: red; font-size: 20px; font-weight: bold;");
+    console.log("Designed by Ethan Cai. 复制前请联系原作者。");
+    let products = [], filteredData = [], currentPage = 1;
+    const pageSize = 40;
+    // 修改 cleanId 函数，确保能处理掉各种前导字符
+const cleanId = (str) => {
+    if (!str) return "";
+    // 移除开头所有的 ' 或 +，同时去掉所有双引号和前后空格
+    return str.toString().replace(/^['+]+/, '').replace(/["=\t]/g, '').trim();
+};
+
+    async function loadData() {
+        try {
+            const res = await fetch('data.csv');
+            const text = await res.text();
+            products = text.split(/\r?\n/).slice(1).map((line, index) => {
+                let r = [], cur = '', q = false;
+                for (let c of line) { if (c === '"') q = !q; else if (c === ',' && !q) { r.push(cur.trim()); cur = ''; } else cur += c; }
+                r.push(cur.trim()); r.push(index);
+                return r;
+            }).filter(a => a.length >= 12);
+            initFilters(); applyFilters();
+        } catch (e) { console.error(e); }
+    }
+
+// 【修复 1688 链接解析】提取纯链接
+    function checkLink(rawUrl) {
+        if (!rawUrl) { alert('❌ 无核价链接'); return; }
+        // 匹配字符串中出现的第一个 http... 链接
+        const match = rawUrl.match(/https?:\/\/[^\s]+/);
+        if (match) {
+            window.open(match[0], '_blank');
+        } else {
+            alert('❌ 链接格式无法识别');
+        }
+    }
+
+  // 修改 mapData 函数
+const mapData = (arr) => {
+    return {
+        title: arr[0],
+        variant: arr[1],
+        price: parseFloat(arr[2]) || 0,
+        imgUrl: arr[3],
+        link: arr[4],
+        l1: arr[5],
+        l2: arr[6],
+        inviteId: cleanId(arr[7]),
+        // 关键点：使用 cleanId 处理，强制转为字符串且去除干扰符
+        modelId: cleanId(arr[8]), 
+        link1688: arr[9],
+        judge: arr[10],
+        date: arr[11],
+        specialTag: arr[14] || "",
+        modelCount: arr[15] || "1"
+    };
+};
+
+    function render(dataList, page = 1) {
+        currentPage = page;
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = '';
+        dataList.slice((page - 1) * pageSize, page * pageSize).forEach(arr => {
+            const item = mapData(arr);
+            const card = document.createElement('div');
+            card.className = 'card';
+card.innerHTML = `
+    <div class="judge-tag ${item.judge === 'P0' ? 'bg-p0' : 'bg-p1'}" onclick="checkLink('${item.link1688}')">${item.judge}</div>
+    ${item.specialTag ? `<div class="special-tag">${item.specialTag}</div>` : ''}
+    <div class="img-container" ondblclick="document.getElementById('modalImg').src='${item.imgUrl}'; document.getElementById('imageModal').style.display='flex';">
+        <img src="${item.imgUrl}" loading="lazy">
+    </div>
+    <div class="info">
+        <div class="title" title="${item.title}">${item.title}</div>
+        <div class="price-variant-row">
+            <span class="price">¥${item.price}</span>
+            <span class="variant" title="${item.variant}">${item.variant}</span>
+        </div>
+        <div class="invite-row">
+            <div class="model-count-tag">${item.modelCount}款</div>
+            <div class="invite-id-box" onclick="navigator.clipboard.writeText('${item.inviteId}'); alert('已复制ID: ${item.inviteId}')">${item.inviteId}</div>
+        </div>
+        <div class="footer-row">
+            <span>${item.date}</span>
+            <span style="font-weight:bold; color:#555;">${item.modelId}</span>
+            <a href="${item.link}" target="_blank" class="btn-link">原品 >>></a>
+        </div>
+    </div>`;
+            grid.appendChild(card);
+        });
+        renderPagination(dataList.length);
+    }
+
+    function renderPagination(total) {
+        const totalPages = Math.ceil(total / pageSize);
+        const p = document.getElementById('pagination');
+        p.innerHTML = `
+            <button onclick="changePage(-1)" ${currentPage===1?'disabled':''}>上一页</button>
+            <span style="margin:0 10px;">${currentPage}/${totalPages || 1}</span>
+            <button onclick="changePage(1)" ${currentPage>=totalPages?'disabled':''}>下一页</button>
+            <input type="number" id="jumpPage" style="width:50px; margin-left:10px;" placeholder="页码">
+            <button onclick="jumpToPage()">跳转</button>`;
+    }
+
+    function changePage(delta) { render(filteredData, currentPage + delta); }
+    function jumpToPage() {
+        const p = parseInt(document.getElementById('jumpPage').value);
+        if(p > 0 && p <= Math.ceil(filteredData.length/pageSize)) render(filteredData, p);
+    }
+
+    function applyFilters() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const l1 = document.getElementById('l1Filter').value, l2 = document.getElementById('l2Filter').value;
+        const p = document.getElementById('pFilter').value, tag = document.getElementById('tagFilter').value;
+        const min = parseFloat(document.getElementById('minPrice').value) || 0, max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+        
+        filteredData = products.filter(arr => {
+            const i = mapData(arr);
+            return (i.title.toLowerCase().includes(q) || i.inviteId.toLowerCase().includes(q)) &&
+                   (!l1 || i.l1 === l1) && (!l2 || i.l2 === l2) && (!p || i.judge === p) && 
+                   (!tag || i.specialTag === tag) && (i.price >= min && i.price <= max);
+        });
+        
+        const sort = document.getElementById('sortOrder').value;
+        if (sort === 'priceAsc') filteredData.sort((a,b) => a[2] - b[2]);
+        else if (sort === 'priceDesc') filteredData.sort((a,b) => b[2] - a[2]);
+        
+        document.getElementById('countDisplay').innerText = `已筛选：${filteredData.length} 款`;
+        render(filteredData, 1);
+    }
+
+    function initFilters() {
+        [...new Set(products.map(p => p[5]))].forEach(v => { if(v) document.getElementById('l1Filter').innerHTML += `<option value="${v}">${v}</option>`; });
+        [...new Set(products.map(p => p[14]?.trim()).filter(v => v))].forEach(v => { document.getElementById('tagFilter').innerHTML += `<option value="${v}">${v}</option>`; });
+    }
+
+    function updateL2() { const l1 = document.getElementById('l1Filter').value; const s = document.getElementById('l2Filter'); s.innerHTML = '<option value="">二级类目(全部)</option>'; [...new Set(products.filter(p => !l1 || p[5] === l1).map(p => p[6]))].forEach(v => { if(v) s.innerHTML += `<option value="${v}">${v}</option>`; }); }
+    let timer; const debouncedFilter = () => { clearTimeout(timer); timer = setTimeout(applyFilters, 300); };
+    window.onload = loadData;
+    // Data-Powered Template | Author: Ethan Cai (ethan.cai02@shopee.com)
+// 内部使用，严禁对外转载
+</script>
+<footer style="
+    text-align: center; 
+    color: #86868b; 
+    font-size: 11px; 
+    margin-top: 80px; 
+    padding: 40px; 
+    letter-spacing: 0.5px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+">
+    <div style="margin-bottom: 4px;">Designed by Ethan Cai</div>
+    <div style="opacity: 0.8;">ethan.cai02@shopee.com</div>
+</footer>
+
+<div id="author-tag" onclick="this.style.display='none'" style="
+    display:none; 
+    position:fixed; 
+    top:20px; 
+    right:20px; 
+    background:rgba(255,255,255,0.95); 
+    color:#333; 
+    padding:6px 10px; 
+    border-radius:12px; 
+    z-index:9999; 
+    cursor:pointer; 
+    font-family: -apple-system, sans-serif;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.1);
+">
+    🚀 祝老板早日爆单，财源滚滚！
+</div>
+
+<div onclick="document.getElementById('author-tag').style.display='block'" 
+     style="width:120px; height:30px; margin:-40px auto 0; cursor:pointer; background:transparent; z-index:9998;">
+</div>
+</body>
+</html>
+</div>
