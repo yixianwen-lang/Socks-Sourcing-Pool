@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>热销原品 · 合并展示</title>
     <style>
-        /* 样式与之前一致，为简洁起见保留关键部分 */
         * { box-sizing: border-box; }
         body { font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f4f7; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 1280px; margin: 0 auto; }
@@ -62,8 +61,10 @@
             <option value="P0">💰 高价品 (P0)</option>
             <option value="P1">🔄 普通品 (P1)</option>
         </select>
-        <!-- 新增发布日期筛选输入框 -->
-        <input type="text" id="dateFilter" placeholder="📅 发布日期 (如 03-18)" oninput="debouncedFilter()">
+        <!-- 发布日期下拉选择框 -->
+        <select id="dateFilter" onchange="applyFilters()">
+            <option value="">发布日期(全部)</option>
+        </select>
         <input type="number" id="minPrice" placeholder="¥ 最低价" step="0.01" oninput="debouncedFilter()">
         <input type="number" id="maxPrice" placeholder="¥ 最高价" step="0.01" oninput="debouncedFilter()">
         <select id="sortOrder" onchange="applyFilters()">
@@ -101,7 +102,13 @@
         return str.toString().replace(/^['"+]+|["=\t]/g, '').trim();
     };
 
-    const safeGet = (arr, idx, defaultValue = '') => (arr && arr.length > idx) ? (arr[idx] || '') : defaultValue;
+    // 安全获取并转为字符串
+    const safeGet = (arr, idx, defaultValue = '') => {
+        if (arr && arr.length > idx && arr[idx] != null) {
+            return String(arr[idx]);
+        }
+        return defaultValue;
+    };
 
     const parseRow = (arr) => {
         return {
@@ -112,12 +119,12 @@
             link: safeGet(arr, 4),
             l1: safeGet(arr, 5),
             l2: safeGet(arr, 6),
-            l3: safeGet(arr, 16),          // 三级类目，可能为空
+            l3: safeGet(arr, 16),          // 三级类目
             inviteId: cleanId(safeGet(arr, 7)),
             modelId: cleanId(safeGet(arr, 8)),
             link1688: safeGet(arr, 9),
             judgeText: safeGet(arr, 10).trim(),
-            date: safeGet(arr, 11),         // 发布日期字段，如 "03-18发布"
+            date: safeGet(arr, 11),         // 发布日期
             itemid: cleanId(safeGet(arr, 12)) || `temp_${Math.random()}`,
             maxPrice: parseFloat(safeGet(arr, 13)) || 0,
             tag: safeGet(arr, 14).trim(),
@@ -305,22 +312,17 @@
         const l2 = document.getElementById('l2Filter').value;
         const l3 = document.getElementById('l3Filter').value;
         const pLevel = document.getElementById('pFilter').value;
-        const dateKeyword = document.getElementById('dateFilter').value.toLowerCase().trim(); // 新增发布日期关键词
+        const selectedDate = document.getElementById('dateFilter').value; // 选中的发布日期
         const min = parseFloat(document.getElementById('minPrice').value) || 0;
         const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
 
         filteredGroup = groupedProducts.filter(g => {
-            // 搜索标题或邀请ID
             if (q && !g.title.toLowerCase().includes(q) && !g.inviteId.toLowerCase().includes(q)) return false;
-            // 类目筛选
             if (l1 && g.l1 !== l1) return false;
             if (l2 && g.l2 !== l2) return false;
             if (l3 && g.l3 !== l3) return false;
-            // 高价品筛选
             if (pLevel && g.judgeLevel !== pLevel) return false;
-            // 发布日期筛选（模糊匹配）
-            if (dateKeyword && !(g.date && g.date.toLowerCase().includes(dateKeyword))) return false;
-            // 价格区间
+            if (selectedDate && g.date !== selectedDate) return false; // 精确匹配发布日期
             if (g.maxPrice < min || g.minPrice > max) return false;
             return true;
         });
@@ -339,13 +341,13 @@
     }
 
     function initFilters() {
+        // 一级类目
         const l1Set = new Set();
-        const l3Set = new Set();
+        // 发布日期集合
+        const dateSet = new Set();
         groupedProducts.forEach(g => {
             if (g.l1) l1Set.add(g.l1);
-            // 修复 trim 错误：确保 g.l3 是字符串再处理
-            const l3Val = (typeof g.l3 === 'string') ? g.l3.trim() : (g.l3 ? String(g.l3).trim() : '');
-            if (l3Val) l3Set.add(l3Val);
+            if (g.date) dateSet.add(g.date);
         });
         const l1Select = document.getElementById('l1Filter');
         l1Select.innerHTML = '<option value="">一级类目(全部)</option>';
@@ -355,8 +357,15 @@
             l1Select.appendChild(opt);
         });
 
-        // 三级类目初始化（但通常由联动更新，这里仅为了填充可能的独立值）
-        // 但我们将在updateL3中动态生成，所以这里不用填充l3Set到下拉
+        // 发布日期下拉
+        const dateSelect = document.getElementById('dateFilter');
+        dateSelect.innerHTML = '<option value="">发布日期(全部)</option>';
+        [...dateSet].sort().forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            dateSelect.appendChild(opt);
+        });
 
         updateL2();
     }
@@ -385,9 +394,7 @@
         const l3Set = new Set();
         groupedProducts.forEach(g => {
             if ((!l1 || g.l1 === l1) && (!l2 || g.l2 === l2)) {
-                // 安全处理 l3
-                const l3Val = (typeof g.l3 === 'string') ? g.l3.trim() : (g.l3 ? String(g.l3).trim() : '');
-                if (l3Val) l3Set.add(l3Val);
+                if (g.l3) l3Set.add(g.l3);
             }
         });
         const l3Select = document.getElementById('l3Filter');
