@@ -4,36 +4,37 @@
     <meta charset="UTF-8">
     <title>热销原品 · 合并展示</title>
     <style>
-        /* 样式保持不变，此处省略以节省空间，实际使用请包含完整样式 */
+        /* 样式与之前一致，为简洁起见保留关键部分 */
         * { box-sizing: border-box; }
         body { font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f4f7; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 1280px; margin: 0 auto; }
         header { background: #ee4d2d; color: white; padding: 20px; border-radius: 16px; margin-bottom: 24px; }
-        .desc-box { background: rgba(255,255,255,0.2); padding: 14px 16px; margin-top: 12px; border-radius: 12px; }
-        .filter-section { background: white; padding: 18px 20px; border-radius: 24px; margin-bottom: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-        input, select { padding: 10px 14px; border: 1px solid #e2e2e2; border-radius: 30px; font-size: 13px; background: #fafafa; }
+        .desc-box { background: rgba(255,255,255,0.2); padding: 14px 16px; border-radius: 12px; font-size: 14px; }
+        .filter-section { background: white; padding: 18px 20px; border-radius: 24px; margin-bottom: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; border: 1px solid #f0f0f0; }
+        input, select { padding: 10px 14px; border: 1px solid #e2e2e2; border-radius: 30px; font-size: 13px; background: #fafafa; min-width: 130px; }
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
         .card { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #f0f0f0; position: relative; display: flex; flex-direction: column; }
-        .judge-tag { position: absolute; top: 12px; left: 12px; padding: 4px 10px; border-radius: 30px; font-size: 11px; font-weight: 700; cursor: pointer; z-index: 10; }
-        .bg-p0 { background: #2b7a4b; color: white; }
-        .bg-p1 { background: #1a5c7e; color: white; }
+        .judge-tag { position: absolute; top: 12px; left: 12px; padding: 4px 10px; border-radius: 30px; font-size: 11px; font-weight: 700; cursor: pointer; z-index: 10; color: white; }
+        .bg-p0 { background: #2b7a4b; }
+        .bg-p1 { background: #1a5c7e; }
         .img-container { width: 100%; height: 200px; background: #f8f8f8; display: flex; align-items: center; justify-content: center; cursor: zoom-in; border-bottom: 1px solid #eee; }
         .img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .info { padding: 18px 16px; flex-grow: 1; }
         .title { font-weight: 600; font-size: 15px; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; overflow: hidden; }
         .price-range { color: #ee4d2d; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-        .variants-box { background: #fafafa; border-radius: 16px; padding: 12px; margin: 12px 0; max-height: 200px; overflow-y: auto; }
+        .variants-box { background: #fafafa; border-radius: 16px; padding: 12px; margin: 12px 0; max-height: 200px; overflow-y: auto; border: 1px solid #efefef; }
         .variant-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 8px; border-bottom: 1px dashed #eee; }
         .invite-row { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
         .model-count-tag { background: #fff1f0; border: 1px solid #ffbcb3; color: #c02b1a; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 30px; }
         .invite-id-box { flex-grow: 1; background: #fff8f6; border: 2px dashed #ee4d2d; padding: 6px; text-align: center; font-size: 15px; font-weight: 700; color: #ee4d2d; border-radius: 40px; cursor: pointer; }
-        .footer-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #9c9cac; border-top: 1px solid #efefef; padding-top: 14px; }
+        .footer-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #9c9cac; border-top: 1px solid #efefef; padding-top: 14px; margin-top: auto; }
         .footer-row a { color: #0066cc; font-weight: 600; text-decoration: none; font-size: 12px; background: #f0f7ff; padding: 4px 10px; border-radius: 40px; margin-left: 6px; }
-        .expand-btn { background: none; border: 1px dashed #aaa; border-radius: 30px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin: 10px 0 5px; width: fit-content; }
+        .expand-btn { background: none; border: 1px dashed #aaa; border-radius: 30px; padding: 6px 12px; font-size: 12px; cursor: pointer; margin: 10px 0 5px; }
         .model-images { display: none; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
         .model-images.show { display: grid; }
         .model-img-item { text-align: center; }
         .model-img-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: zoom-in; }
+        .model-img-item .model-price { font-size: 11px; color: #ee4d2d; }
         #imageModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
         #imageModal img { max-width: 90vw; max-height: 90vh; object-fit: contain; }
         #pagination button { background: white; border: 1px solid #ddd; border-radius: 30px; padding: 6px 16px; cursor: pointer; }
@@ -43,11 +44,11 @@
 <body>
 <div class="container">
     <header>
-        <h1>🔥 4月热销 · 男女袜寻品清单</h1>
+        <h1>🔥 4月热销 · 按商品ID合并展示</h1>
         <div class="desc-box">
-            <p>💰 <strong>高效提报</strong>：单击红色虚线框复制邀请ID，一次报满该商品下所有规格；鼓励拓色拓码提报！！<br>
+            <p>💰 <strong>高效提报</strong>：单击红色虚线框复制邀请ID，一次报满该商品下所有规格。<br>
             📌 提报路径：SCS卖家后台 → 商品管理 → 机会商品 → 输入邀请ID → 立刻报名<br>
-            💹 价格问题：点击1688标签查看核价参考，联系买手申诉。</p>
+            💹 价格问题：点击左上角标签查看核价参考，联系买手申诉。</p>
         </div>
     </header>
 
@@ -61,6 +62,8 @@
             <option value="P0">💰 高价品 (P0)</option>
             <option value="P1">🔄 普通品 (P1)</option>
         </select>
+        <!-- 新增发布日期筛选输入框 -->
+        <input type="text" id="dateFilter" placeholder="📅 发布日期 (如 03-18)" oninput="debouncedFilter()">
         <input type="number" id="minPrice" placeholder="¥ 最低价" step="0.01" oninput="debouncedFilter()">
         <input type="number" id="maxPrice" placeholder="¥ 最高价" step="0.01" oninput="debouncedFilter()">
         <select id="sortOrder" onchange="applyFilters()">
@@ -98,14 +101,7 @@
         return str.toString().replace(/^['"+]+|["=\t]/g, '').trim();
     };
 
-    // 安全获取数组元素，并转为字符串
-    const safeGet = (arr, idx, defaultValue = '') => {
-        if (arr && arr.length > idx) {
-            let val = arr[idx];
-            return val !== undefined && val !== null ? String(val).trim() : defaultValue;
-        }
-        return defaultValue;
-    };
+    const safeGet = (arr, idx, defaultValue = '') => (arr && arr.length > idx) ? (arr[idx] || '') : defaultValue;
 
     const parseRow = (arr) => {
         return {
@@ -116,15 +112,15 @@
             link: safeGet(arr, 4),
             l1: safeGet(arr, 5),
             l2: safeGet(arr, 6),
-            l3: safeGet(arr, 16),          // 三级类目，已转为字符串
+            l3: safeGet(arr, 16),          // 三级类目，可能为空
             inviteId: cleanId(safeGet(arr, 7)),
             modelId: cleanId(safeGet(arr, 8)),
             link1688: safeGet(arr, 9),
-            judgeText: safeGet(arr, 10),
-            date: safeGet(arr, 11),
+            judgeText: safeGet(arr, 10).trim(),
+            date: safeGet(arr, 11),         // 发布日期字段，如 "03-18发布"
             itemid: cleanId(safeGet(arr, 12)) || `temp_${Math.random()}`,
             maxPrice: parseFloat(safeGet(arr, 13)) || 0,
-            tag: safeGet(arr, 14),
+            tag: safeGet(arr, 14).trim(),
             modelCount: parseInt(safeGet(arr, 15), 10) || 1
         };
     };
@@ -154,7 +150,6 @@
             if (!group.imgUrl && parsed.imgUrl) group.imgUrl = parsed.imgUrl;
             if (!group.link && parsed.link) group.link = parsed.link;
             if (!group.link1688 && parsed.link1688) group.link1688 = parsed.link1688;
-            // 如果当前组没有l3，或者当前l3非空，可以更新（但一般取第一个非空）
             if (!group.l3 && parsed.l3) group.l3 = parsed.l3;
             if (parsed.judgeText.includes('高价品') || parsed.judgeText.includes('P0')) {
                 group.hasHighPrice = true;
@@ -199,10 +194,10 @@
                         cur = '';
                     } else cur += c;
                 }
-                row.push(cur.trim()); // 最后一列
-                row.push(idx); // 保存原始索引
+                row.push(cur.trim());
+                row.push(idx);
                 return row;
-            }).filter(r => r.length >= 2); // 至少有两列才保留
+            }).filter(r => r.length >= 2);
 
             console.log(`成功解析 ${products.length} 行数据`);
             if (products.length === 0) throw new Error('没有有效数据行');
@@ -215,7 +210,7 @@
         } catch (e) {
             console.error('数据加载失败:', e);
             document.getElementById('countDisplay').innerText = '❌ 数据加载失败';
-            document.getElementById('productGrid').innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; background:white; border-radius:20px;">加载失败：${e.message}<br>请确保 data.csv 文件存在且格式正确。</div>`;
+            document.getElementById('productGrid').innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px;">加载失败：${e.message}</div>`;
         }
     }
 
@@ -248,8 +243,8 @@
             let imagesHtml = g.variants.map(v => `
                 <div class="model-img-item">
                     <img src="${v.imgUrl || g.imgUrl}" ondblclick="document.getElementById('modalImg').src='${v.imgUrl || g.imgUrl}'; document.getElementById('imageModal').style.display='flex';">
-                    <div style="font-size:11px; color:#ee4d2d;">¥${v.price.toFixed(2)}</div>
-                    <div style="font-size:10px; color:#888;" title="${v.variant.replace(/"/g, '&quot;')}">${v.variant.substring(0,8)}…</div>
+                    <div class="model-price">¥${v.price.toFixed(2)}</div>
+                    <div class="model-variant" title="${v.variant.replace(/"/g, '&quot;')}">${v.variant.substring(0,8)}…</div>
                 </div>
             `).join('');
 
@@ -310,15 +305,22 @@
         const l2 = document.getElementById('l2Filter').value;
         const l3 = document.getElementById('l3Filter').value;
         const pLevel = document.getElementById('pFilter').value;
+        const dateKeyword = document.getElementById('dateFilter').value.toLowerCase().trim(); // 新增发布日期关键词
         const min = parseFloat(document.getElementById('minPrice').value) || 0;
         const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
 
         filteredGroup = groupedProducts.filter(g => {
+            // 搜索标题或邀请ID
             if (q && !g.title.toLowerCase().includes(q) && !g.inviteId.toLowerCase().includes(q)) return false;
+            // 类目筛选
             if (l1 && g.l1 !== l1) return false;
             if (l2 && g.l2 !== l2) return false;
             if (l3 && g.l3 !== l3) return false;
+            // 高价品筛选
             if (pLevel && g.judgeLevel !== pLevel) return false;
+            // 发布日期筛选（模糊匹配）
+            if (dateKeyword && !(g.date && g.date.toLowerCase().includes(dateKeyword))) return false;
+            // 价格区间
             if (g.maxPrice < min || g.minPrice > max) return false;
             return true;
         });
@@ -341,9 +343,9 @@
         const l3Set = new Set();
         groupedProducts.forEach(g => {
             if (g.l1) l1Set.add(g.l1);
-            // 确保 l3 是字符串再 trim
-            const l3Str = g.l3 ? String(g.l3).trim() : '';
-            if (l3Str) l3Set.add(l3Str);
+            // 修复 trim 错误：确保 g.l3 是字符串再处理
+            const l3Val = (typeof g.l3 === 'string') ? g.l3.trim() : (g.l3 ? String(g.l3).trim() : '');
+            if (l3Val) l3Set.add(l3Val);
         });
         const l1Select = document.getElementById('l1Filter');
         l1Select.innerHTML = '<option value="">一级类目(全部)</option>';
@@ -353,14 +355,8 @@
             l1Select.appendChild(opt);
         });
 
-        // 初始化三级类目（后续由 updateL3 填充，但这里也填充一下）
-        const l3Select = document.getElementById('l3Filter');
-        l3Select.innerHTML = '<option value="">三级类目(全部)</option>';
-        [...l3Set].sort().forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v; opt.textContent = v;
-            l3Select.appendChild(opt);
-        });
+        // 三级类目初始化（但通常由联动更新，这里仅为了填充可能的独立值）
+        // 但我们将在updateL3中动态生成，所以这里不用填充l3Set到下拉
 
         updateL2();
     }
@@ -389,8 +385,9 @@
         const l3Set = new Set();
         groupedProducts.forEach(g => {
             if ((!l1 || g.l1 === l1) && (!l2 || g.l2 === l2)) {
-                const l3Str = g.l3 ? String(g.l3).trim() : '';
-                if (l3Str) l3Set.add(l3Str);
+                // 安全处理 l3
+                const l3Val = (typeof g.l3 === 'string') ? g.l3.trim() : (g.l3 ? String(g.l3).trim() : '');
+                if (l3Val) l3Set.add(l3Val);
             }
         });
         const l3Select = document.getElementById('l3Filter');
