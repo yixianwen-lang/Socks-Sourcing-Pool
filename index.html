@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>热销原品 · 合并展示</title>
     <style>
+        /* 样式保持不变（略，请复用之前的样式） */
         * { box-sizing: border-box; }
         body { font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif; background: #f4f4f7; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 1280px; margin: 0 auto; }
@@ -16,8 +17,8 @@
         .card { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #f0f0f0; transition: transform 0.15s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); border-color: #ffe0d6; }
         .judge-tag { position: absolute; top: 12px; left: 12px; padding: 4px 10px; border-radius: 30px; font-size: 11px; font-weight: 700; cursor: pointer; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.08); letter-spacing: 0.3px; backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.3); }
-        .bg-p0 { background: #2b7a4b; color: white; }  /* 高价品 深绿 */
-        .bg-p1 { background: #1a5c7e; color: white; }  /* 普通品 深蓝 */
+        .bg-p0 { background: #2b7a4b; color: white; }
+        .bg-p1 { background: #1a5c7e; color: white; }
         .special-tag { position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #ff7e5f, #f64f59); color: white; padding: 4px 12px; border-radius: 40px; font-size: 11px; font-weight: 700; z-index: 10; box-shadow: 0 4px 12px rgba(246,79,89,0.3); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(2px); }
         .img-container { width: 100%; height: 200px; background: #f8f8f8; overflow: hidden; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
         .img-container img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.2s; }
@@ -49,7 +50,7 @@
 <body>
 <div class="container">
     <header>
-        <h1 style="margin:0; font-size: 26px; display: flex; align-items: center; gap: 10px;">🔥 4月热销 · 按商品ID合并展示</h1>
+        <h1 style="margin:0; font-size: 26px;">🔥 4月热销 · 按商品ID合并展示</h1>
         <div class="desc-box">
             <div style="display: flex; gap: 24px; flex-wrap: wrap;">
                 <div><span style="background:#2b7a4b; width:14px; height:14px; display:inline-block; border-radius:4px; margin-right:6px;"></span> <strong>高价品</strong> —— 点击左上角标签查看1688链接</div>
@@ -85,7 +86,7 @@
     </div>
 
     <div class="product-grid" id="productGrid"></div>
-    <div style="margin:30px 0 20px; text-align:center; display: flex; justify-content: center; gap: 6px;" id="pagination"></div>
+    <div style="margin:30px 0 20px; text-align:center;" id="pagination"></div>
 </div>
 
 <div id="imageModal" onclick="this.style.display='none'"><img id="modalImg" src="" alt="放大图"></div>
@@ -101,21 +102,17 @@
         console.log("%c⚠️ 内部工具，请勿外传", "color:#ee4d2d; font-size:16px; font-weight:bold;");
     })();
 
-    // 原始二维数组 products
     let products = [];
-    // 按itemid合并后的商品列表
     let groupedProducts = [];
     let filteredGroup = [];
     let currentPage = 1;
     const pageSize = 40;
 
-    // 清洗ID (移除前导单引号/加号/引号/制表符)
     const cleanId = (str) => {
         if (!str) return "";
         return str.toString().replace(/^['"+]+|["=\t]/g, '').trim();
     };
 
-    // 从原始行提取信息 (用于分组)
     const parseRow = (arr) => {
         return {
             title: arr[0] || '',
@@ -130,14 +127,13 @@
             link1688: arr[9] || '',
             judgeText: (arr[10] || '').trim(),
             date: arr[11] || '',
-            itemid: arr[12] ? cleanId(arr[12]) : `temp_${Math.random()}`, // 若itemid为空则生成临时id（不合并）
+            itemid: arr[12] ? cleanId(arr[12]) : `temp_${Math.random()}`,
             maxPrice: parseFloat(arr[13]) || 0,
             tag: (arr[14] || '').trim(),
             modelCount: parseInt(arr[15], 10) || 1
         };
     };
 
-    // 分组聚合
     function groupByItemid(rows) {
         const groups = new Map();
         rows.forEach(row => {
@@ -152,28 +148,21 @@
                     l1: parsed.l1,
                     l2: parsed.l2,
                     inviteId: parsed.inviteId,
-                    link1688: parsed.link1688, // 取第一个非空，后面可能覆盖
+                    link1688: parsed.link1688,
                     specialTag: parsed.tag,
                     date: parsed.date,
                     variants: [],
-                    hasHighPrice: false, // 标记是否有高价品
+                    hasHighPrice: false,
                 });
             }
             const group = groups.get(id);
-            // 保留第一个非空图片/链接等 (简单处理：如果当前图片为空且组内已有，保留原样)
             if (!group.imgUrl && parsed.imgUrl) group.imgUrl = parsed.imgUrl;
             if (!group.link && parsed.link) group.link = parsed.link;
             if (!group.link1688 && parsed.link1688) group.link1688 = parsed.link1688;
             if (!group.specialTag && parsed.tag) group.specialTag = parsed.tag;
-            // 邀请ID可能不同，但同一商品一般相同，如果不一致，保留第一个
-            if (group.inviteId !== parsed.inviteId) {
-                // 如果不同，暂存为多个？但实际业务应相同，这里简单保留第一个
-            }
-            // 判断是否为高价品：price judge列包含"高价品"或judgeText包含"高价品"
             if (parsed.judgeText.includes('高价品') || parsed.judgeText.includes('P0')) {
                 group.hasHighPrice = true;
             }
-            // 添加规格
             group.variants.push({
                 variant: parsed.variant,
                 price: parsed.price,
@@ -183,29 +172,24 @@
             });
         });
 
-        // 转换为数组并计算每个组的minPrice/maxPrice
         const result = [];
         for (let [id, group] of groups.entries()) {
             const prices = group.variants.map(v => v.price).filter(p => p > 0);
             group.minPrice = prices.length ? Math.min(...prices) : 0;
             group.maxPrice = prices.length ? Math.max(...prices) : 0;
             group.modelCount = group.variants.length;
-            // 根据hasHighPrice决定整体等级，用于筛选
             group.judgeLevel = group.hasHighPrice ? 'P0' : 'P1';
-            // 排序variants（可选）
             group.variants.sort((a,b) => a.price - b.price);
             result.push(group);
         }
         return result;
     }
 
-    // 加载CSV
     async function loadData() {
         try {
             const res = await fetch('data.csv');
             const text = await res.text();
             const lines = text.split(/\r?\n/);
-            // 简单解析CSV (处理引号内逗号)
             products = lines.slice(1).map((line, idx) => {
                 if (!line.trim()) return null;
                 let row = [], cur = '', inQuote = false;
@@ -216,12 +200,13 @@
                         cur = '';
                     } else cur += c;
                 }
-                row.push(cur.trim()); // 最后一列
-                row.push(idx); // 保存原始索引
+                row.push(cur.trim());
+                row.push(idx);
                 return row;
             }).filter(r => r && r.length >= 12);
 
             groupedProducts = groupByItemid(products);
+            console.log('分组后商品数量:', groupedProducts.length); // 调试输出
             initFilters();
             applyFilters();
         } catch (e) {
@@ -230,7 +215,6 @@
         }
     }
 
-    // 提取1688链接
     function checkLink(rawUrl) {
         if (!rawUrl) { alert('❌ 无核价链接'); return; }
         const match = rawUrl.match(/https?:\/\/[^\s]+/);
@@ -238,7 +222,6 @@
         else alert('❌ 无法识别的链接');
     }
 
-    // 渲染卡片 (grouped)
     function render(groupList, page = 1) {
         currentPage = page;
         const grid = document.getElementById('productGrid');
@@ -253,10 +236,9 @@
             const priceRangeText = g.minPrice === g.maxPrice ? `¥${g.minPrice.toFixed(2)}` : `¥${g.minPrice.toFixed(2)} - ¥${g.maxPrice.toFixed(2)}`;
             const inviteId = g.inviteId || '';
 
-            // 构建规格列表html
             let variantsHtml = '';
-            g.variants.slice(0, 10).forEach(v => { // 最多展示10个，避免过长
-                variantsHtml += `<div class="variant-item"><span class="variant-name" title="${v.variant}">${v.variant}</span><span class="variant-price">¥${v.price.toFixed(2)}</span></div>`;
+            g.variants.slice(0, 10).forEach(v => {
+                variantsHtml += `<div class="variant-item"><span class="variant-name" title="${v.variant.replace(/"/g, '&quot;')}">${v.variant}</span><span class="variant-price">¥${v.price.toFixed(2)}</span></div>`;
             });
             if (g.variants.length > 10) {
                 variantsHtml += `<div class="variant-item" style="justify-content:center; color:#999;">等${g.variants.length}个规格</div>`;
@@ -297,7 +279,7 @@
         const p = document.getElementById('pagination');
         p.innerHTML = `
             <button onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>◀ 上一页</button>
-            <span style="margin:0 12px; font-weight:500;">${currentPage} / ${totalPages}</span>
+            <span style="margin:0 12px;">${currentPage} / ${totalPages}</span>
             <button onclick="changePage(1)" ${currentPage >= totalPages ? 'disabled' : ''}>下一页 ▶</button>
             <input type="number" id="jumpPage" min="1" max="${totalPages}" style="width:70px;" placeholder="页码">
             <button onclick="jumpToPage()">跳转</button>
@@ -311,36 +293,31 @@
         if (p > 0 && p <= max) render(filteredGroup, p);
     };
 
-    // 筛选 + 排序
     function applyFilters() {
         const q = document.getElementById('searchInput').value.toLowerCase().trim();
         const l1 = document.getElementById('l1Filter').value;
         const l2 = document.getElementById('l2Filter').value;
-        const pLevel = document.getElementById('pFilter').value; // "P0" / "P1" / ""
+        const pLevel = document.getElementById('pFilter').value;
         const tag = document.getElementById('tagFilter').value;
         const min = parseFloat(document.getElementById('minPrice').value) || 0;
         const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
 
         filteredGroup = groupedProducts.filter(g => {
-            // 搜索标题 或 邀请ID
             if (q && !g.title.toLowerCase().includes(q) && !g.inviteId.toLowerCase().includes(q)) return false;
             if (l1 && g.l1 !== l1) return false;
             if (l2 && g.l2 !== l2) return false;
             if (pLevel && g.judgeLevel !== pLevel) return false;
             if (tag && g.specialTag !== tag) return false;
-            // 价格区间：只要商品最低价 <= max 且 最高价 >= min 即认为有重叠，展示整个商品
             if (g.maxPrice < min || g.minPrice > max) return false;
             return true;
         });
 
-        // 排序
         const sort = document.getElementById('sortOrder').value;
         if (sort === 'priceAsc') {
             filteredGroup.sort((a, b) => a.minPrice - b.minPrice);
         } else if (sort === 'priceDesc') {
             filteredGroup.sort((a, b) => b.maxPrice - a.maxPrice);
         } else {
-            // 默认按原顺序 (按itemid出现顺序)
             filteredGroup.sort((a, b) => (a.itemid || '').localeCompare(b.itemid || ''));
         }
 
@@ -348,24 +325,32 @@
         render(filteredGroup, 1);
     }
 
-    // 初始化下拉框
     function initFilters() {
         const l1Set = new Set();
         const tagSet = new Set();
         groupedProducts.forEach(g => {
-            if (g.l1) l1Set.add(g.l1);
-            if (g.specialTag) tagSet.add(g.specialTag);
+            if (g.l1 && g.l1.trim()) l1Set.add(g.l1.trim());
+            if (g.specialTag && g.specialTag.trim()) tagSet.add(g.specialTag.trim());
         });
+        console.log('一级类目选项:', Array.from(l1Set));
+        console.log('特殊标签选项:', Array.from(tagSet));
+
         const l1Select = document.getElementById('l1Filter');
         l1Select.innerHTML = '<option value="">一级类目(全部)</option>';
         [...l1Set].sort().forEach(v => {
-            l1Select.innerHTML += `<option value="${v}">${v}</option>`;
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            l1Select.appendChild(opt);
         });
 
         const tagSelect = document.getElementById('tagFilter');
         tagSelect.innerHTML = '<option value="">特殊标签(全部)</option>';
         [...tagSet].sort().forEach(v => {
-            tagSelect.innerHTML += `<option value="${v}">${v}</option>`;
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            tagSelect.appendChild(opt);
         });
 
         updateL2();
@@ -376,13 +361,16 @@
         const l2Set = new Set();
         groupedProducts.forEach(g => {
             if (!l1 || g.l1 === l1) {
-                if (g.l2) l2Set.add(g.l2);
+                if (g.l2 && g.l2.trim()) l2Set.add(g.l2.trim());
             }
         });
         const l2Select = document.getElementById('l2Filter');
         l2Select.innerHTML = '<option value="">二级类目(全部)</option>';
         [...l2Set].sort().forEach(v => {
-            l2Select.innerHTML += `<option value="${v}">${v}</option>`;
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            l2Select.appendChild(opt);
         });
     }
 
@@ -396,14 +384,14 @@
     window.onload = loadData;
 </script>
 
-<footer style="text-align: center; color: #86868b; font-size: 11px; margin-top: 80px; padding: 40px; letter-spacing: 0.5px;">
-    <div style="margin-bottom: 4px;">Designed by Ethan Cai</div>
+<footer style="text-align: center; color: #86868b; font-size: 11px; margin-top: 80px; padding: 40px;">
+    <div>Designed by Ethan Cai</div>
     <div style="opacity: 0.8;">ethan.cai02@shopee.com</div>
 </footer>
 
-<div id="author-tag" onclick="this.style.display='none'" style="display:none; position:fixed; top:20px; right:20px; background:rgba(255,255,255,0.98); color:#333; padding:10px 16px; border-radius:40px; z-index:9999; cursor:pointer; box-shadow: 0 12px 28px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.1); font-weight:500;">
+<div id="author-tag" onclick="this.style.display='none'" style="display:none; position:fixed; top:20px; right:20px; background:rgba(255,255,255,0.98); color:#333; padding:10px 16px; border-radius:40px; z-index:9999; cursor:pointer; box-shadow: 0 12px 28px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.1);">
     🚀 祝老板早日爆单，财源滚滚！
 </div>
-<div onclick="document.getElementById('author-tag').style.display='block'" style="width:120px; height:30px; margin:-40px auto 0; cursor:pointer; background:transparent; z-index:9998;"></div>
+<div onclick="document.getElementById('author-tag').style.display='block'" style="width:120px; height:30px; margin:-40px auto 0; cursor:pointer; background:transparent;"></div>
 </body>
 </html>
