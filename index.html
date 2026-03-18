@@ -11,7 +11,7 @@
         .desc-box { background: rgba(255,255,255,0.2); padding: 14px 16px; border-radius: 12px; font-size: 14px; }
         .filter-section { background: white; padding: 18px 20px; border-radius: 24px; margin-bottom: 28px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; border: 1px solid #f0f0f0; }
         input, select { padding: 10px 14px; border: 1px solid #e2e2e2; border-radius: 30px; font-size: 13px; background: #fafafa; min-width: 130px; }
-        /* 关键修改：最小宽度调整为240px，间隙缩小到16px，以便展示4-5列 */
+        /* 每行4-5个商品 */
         .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -107,7 +107,6 @@
         return str.toString().replace(/^['"+]+|["=\t]/g, '').trim();
     };
 
-    // 安全获取并转为字符串
     const safeGet = (arr, idx, defaultValue = '') => {
         if (arr && arr.length > idx && arr[idx] != null) {
             return String(arr[idx]);
@@ -122,14 +121,14 @@
             price: parseFloat(safeGet(arr, 2)) || 0,
             imgUrl: safeGet(arr, 3),
             link: safeGet(arr, 4),
-            l1: safeGet(arr, 5),
-            l2: safeGet(arr, 6),
-            l3: safeGet(arr, 16),          // 三级类目
+            l1: safeGet(arr, 5).trim(),
+            l2: safeGet(arr, 6).trim(),
+            l3: safeGet(arr, 16).trim(),          // 三级类目，直接 trim
             inviteId: cleanId(safeGet(arr, 7)),
             modelId: cleanId(safeGet(arr, 8)),
             link1688: safeGet(arr, 9),
             judgeText: safeGet(arr, 10).trim(),
-            date: safeGet(arr, 11),         // 发布日期
+            date: safeGet(arr, 11).trim(),         // 发布日期
             itemid: cleanId(safeGet(arr, 12)) || `temp_${Math.random()}`,
             maxPrice: parseFloat(safeGet(arr, 13)) || 0,
             tag: safeGet(arr, 14).trim(),
@@ -150,18 +149,25 @@
                     link: parsed.link,
                     l1: parsed.l1,
                     l2: parsed.l2,
-                    l3: parsed.l3,
+                    l3: parsed.l3,          // 首次出现的 l3 值
                     inviteId: parsed.inviteId,
                     link1688: parsed.link1688,
                     date: parsed.date,
                     variants: [],
                     hasHighPrice: false,
                 });
+            } else {
+                const group = groups.get(id);
+                // 如果后续行的 l3 与当前不同，打印警告（调试用）
+                if (group.l3 && parsed.l3 && group.l3 !== parsed.l3) {
+                    console.warn(`商品 ${id} 存在不同的三级类目: "${group.l3}" 和 "${parsed.l3}"，将保留首次出现的值`);
+                }
             }
             const group = groups.get(id);
             if (!group.imgUrl && parsed.imgUrl) group.imgUrl = parsed.imgUrl;
             if (!group.link && parsed.link) group.link = parsed.link;
             if (!group.link1688 && parsed.link1688) group.link1688 = parsed.link1688;
+            // 如果 group.l3 为空但当前 parsed.l3 有值，则更新
             if (!group.l3 && parsed.l3) group.l3 = parsed.l3;
             if (parsed.judgeText.includes('高价品') || parsed.judgeText.includes('P0')) {
                 group.hasHighPrice = true;
@@ -317,7 +323,7 @@
         const l2 = document.getElementById('l2Filter').value;
         const l3 = document.getElementById('l3Filter').value;
         const pLevel = document.getElementById('pFilter').value;
-        const selectedDate = document.getElementById('dateFilter').value; // 选中的发布日期
+        const selectedDate = document.getElementById('dateFilter').value;
         const min = parseFloat(document.getElementById('minPrice').value) || 0;
         const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
 
@@ -325,9 +331,9 @@
             if (q && !g.title.toLowerCase().includes(q) && !g.inviteId.toLowerCase().includes(q)) return false;
             if (l1 && g.l1 !== l1) return false;
             if (l2 && g.l2 !== l2) return false;
-            if (l3 && g.l3 !== l3) return false;
+            if (l3 && g.l3 !== l3) return false;  // 精确匹配三级类目
             if (pLevel && g.judgeLevel !== pLevel) return false;
-            if (selectedDate && g.date !== selectedDate) return false; // 精确匹配发布日期
+            if (selectedDate && g.date !== selectedDate) return false;
             if (g.maxPrice < min || g.minPrice > max) return false;
             return true;
         });
@@ -346,9 +352,7 @@
     }
 
     function initFilters() {
-        // 一级类目
         const l1Set = new Set();
-        // 发布日期集合
         const dateSet = new Set();
         groupedProducts.forEach(g => {
             if (g.l1) l1Set.add(g.l1);
@@ -362,13 +366,11 @@
             l1Select.appendChild(opt);
         });
 
-        // 发布日期下拉
         const dateSelect = document.getElementById('dateFilter');
         dateSelect.innerHTML = '<option value="">发布日期(全部)</option>';
         [...dateSet].sort().forEach(v => {
             const opt = document.createElement('option');
-            opt.value = v;
-            opt.textContent = v;
+            opt.value = v; opt.textContent = v;
             dateSelect.appendChild(opt);
         });
 
@@ -399,16 +401,20 @@
         const l3Set = new Set();
         groupedProducts.forEach(g => {
             if ((!l1 || g.l1 === l1) && (!l2 || g.l2 === l2)) {
-                if (g.l3) l3Set.add(g.l3);
+                // 确保 g.l3 是字符串且非空
+                const l3Val = (typeof g.l3 === 'string' && g.l3.trim() !== '') ? g.l3.trim() : null;
+                if (l3Val) l3Set.add(l3Val);
             }
         });
         const l3Select = document.getElementById('l3Filter');
         l3Select.innerHTML = '<option value="">三级类目(全部)</option>';
-        [...l3Set].sort().forEach(v => {
+        // 排序后添加
+        [...l3Set].sort((a,b) => a.localeCompare(b)).forEach(v => {
             const opt = document.createElement('option');
             opt.value = v; opt.textContent = v;
             l3Select.appendChild(opt);
         });
+        console.log('当前三级类目选项:', [...l3Set]); // 调试用
     }
 
     let timer;
