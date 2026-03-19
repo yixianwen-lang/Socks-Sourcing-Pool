@@ -279,6 +279,20 @@
         };
     })();
 
+    // ========== 三级类目数字映射表 ==========
+    // 如果 CSV 中 l3 列是数字代码（如 1、2），请在此定义对应的文本
+    // 键为字符串（如 "1"），值为要显示的中文/英文类目
+    const L3_MAP = {
+        // 根据您之前提供的 CSV 样本添加的示例映射，请根据您的实际数据修改
+        '1': 'Socks',         // 袜子
+        '2': 'Pantyhose',     // 连裤袜
+        '3': 'Others',        // 其他
+        // 如果还有其他数字代码，请继续添加，例如：
+        // '4': 'Sport Socks',
+        // 如果 CSV 中已经是文本，映射不会生效，仍显示原文本
+    };
+    // =====================================
+
     let products = [];
     let groupedProducts = [];
     let filteredGroup = [];
@@ -290,15 +304,26 @@
         return str.toString().replace(/^['"+]+|["=\t]/g, '').trim();
     };
 
-    // 安全获取并转为字符串，避免数字类型
     const safeGet = (arr, idx, defaultValue = '') => {
         if (arr && arr.length > idx && arr[idx] != null) {
-            return String(arr[idx]); // 强制转为字符串
+            return String(arr[idx]);
         }
         return defaultValue;
     };
 
+    // 应用映射：如果 l3 是纯数字（如 "1"）且在映射表中，则返回映射后的文本，否则返回原值
+    const mapL3 = (val) => {
+        if (!val) return val;
+        const trimmed = val.trim();
+        // 如果映射表中存在该键，则返回映射值
+        if (L3_MAP.hasOwnProperty(trimmed)) {
+            return L3_MAP[trimmed];
+        }
+        return val; // 否则返回原值（可能是文本或未映射的数字）
+    };
+
     const parseRow = (arr) => {
+        const rawL3 = safeGet(arr, 16).trim(); // 原始值（可能是数字字符串或文本）
         return {
             title: safeGet(arr, 0),
             variant: safeGet(arr, 1),
@@ -307,12 +332,13 @@
             link: safeGet(arr, 4),
             l1: safeGet(arr, 5).trim(),
             l2: safeGet(arr, 6).trim(),
-            l3: safeGet(arr, 16).trim(),          // 三级类目，强制字符串并trim
+            l3: mapL3(rawL3),                  // 应用映射后的显示值
+            l3raw: rawL3,                       // 保留原始值用于调试
             inviteId: cleanId(safeGet(arr, 7)),
             modelId: cleanId(safeGet(arr, 8)),
             link1688: safeGet(arr, 9),
             judgeText: safeGet(arr, 10).trim(),
-            date: safeGet(arr, 11).trim(),         // 发布日期
+            date: safeGet(arr, 11).trim(),
             itemid: cleanId(safeGet(arr, 12)) || `temp_${Math.random()}`,
             maxPrice: parseFloat(safeGet(arr, 13)) || 0,
             tag: safeGet(arr, 14).trim(),
@@ -333,7 +359,8 @@
                     link: parsed.link,
                     l1: parsed.l1,
                     l2: parsed.l2,
-                    l3: parsed.l3,
+                    l3: parsed.l3,          // 使用映射后的显示值
+                    l3raw: parsed.l3raw,    // 原始值，用于调试
                     inviteId: parsed.inviteId,
                     link1688: parsed.link1688,
                     date: parsed.date,
@@ -345,7 +372,7 @@
             if (!group.imgUrl && parsed.imgUrl) group.imgUrl = parsed.imgUrl;
             if (!group.link && parsed.link) group.link = parsed.link;
             if (!group.link1688 && parsed.link1688) group.link1688 = parsed.link1688;
-            // 如果当前 group.l3 为空但 parsed.l3 有值，则更新（保留第一个非空值）
+            // 如果当前 group.l3 为空但 parsed.l3 有值，则更新（保留第一个非空映射值）
             if (!group.l3 && parsed.l3) group.l3 = parsed.l3;
             if (parsed.judgeText.includes('高价品') || parsed.judgeText.includes('P0')) {
                 group.hasHighPrice = true;
@@ -375,7 +402,8 @@
 
     async function loadData() {
         try {
-            const res = await fetch('data.csv');  // 请确保文件名正确
+            // 已根据用户要求修改为 'data - new.csv'
+            const res = await fetch('data - new.csv');
             if (!res.ok) throw new Error(`HTTP error ${res.status}`);
             const text = await res.text();
             const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
@@ -400,6 +428,12 @@
 
             groupedProducts = groupByItemid(products);
             console.log(`分组后共 ${groupedProducts.length} 个商品`);
+
+            // 打印前5个商品的原始 l3 和映射后 l3，方便检查
+            console.log('前5个商品的 l3 样本（原始值 → 映射后）:');
+            groupedProducts.slice(0,5).forEach((g, i) => {
+                console.log(`商品 ${i+1}: 原始="${g.l3raw}", 映射后="${g.l3}"`);
+            });
 
             initFilters();
             applyFilters();
@@ -509,7 +543,7 @@
             if (q && !g.title.toLowerCase().includes(q) && !g.inviteId.toLowerCase().includes(q)) return false;
             if (l1 && g.l1 !== l1) return false;
             if (l2 && g.l2 !== l2) return false;
-            if (l3 && g.l3 !== l3) return false;  // 字符串比较
+            if (l3 && g.l3 !== l3) return false;  // 使用映射后的显示值进行比较
             if (pLevel && g.judgeLevel !== pLevel) return false;
             if (selectedDate && g.date !== selectedDate) return false;
             if (g.maxPrice < min || g.minPrice > max) return false;
@@ -530,9 +564,7 @@
     }
 
     function initFilters() {
-        // 一级类目
         const l1Set = new Set();
-        // 发布日期集合
         const dateSet = new Set();
         groupedProducts.forEach(g => {
             if (g.l1) l1Set.add(g.l1);
@@ -546,7 +578,6 @@
             l1Select.appendChild(opt);
         });
 
-        // 发布日期下拉
         const dateSelect = document.getElementById('dateFilter');
         dateSelect.innerHTML = '<option value="">发布日期(全部)</option>';
         [...dateSet].sort().forEach(v => {
@@ -582,8 +613,8 @@
         const l3Set = new Set();
         groupedProducts.forEach(g => {
             if ((!l1 || g.l1 === l1) && (!l2 || g.l2 === l2)) {
-                // 确保 g.l3 是字符串且非空
-                const l3Val = (g.l3 && typeof g.l3 === 'string') ? g.l3.trim() : (g.l3 ? String(g.l3).trim() : '');
+                // 使用映射后的显示值 g.l3
+                const l3Val = (g.l3 && typeof g.l3 === 'string') ? g.l3.trim() : '';
                 if (l3Val) l3Set.add(l3Val);
             }
         });
@@ -594,7 +625,7 @@
             opt.value = v; opt.textContent = v;
             l3Select.appendChild(opt);
         });
-        console.log('当前三级类目选项:', [...l3Set]); // 调试用
+        console.log('当前三级类目选项:', [...l3Set]);
     }
 
     let timer;
